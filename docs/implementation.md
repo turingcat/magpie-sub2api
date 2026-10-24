@@ -41,13 +41,13 @@ bun test packages/opencode-sub2api-auth/test/endpoint.test.mjs
 # 3 pass, 0 fail
 
 bun test packages/opencode-sub2api-auth/test/models.test.mjs
-# 7 pass, 0 fail
+# 8 pass, 0 fail
 
 bun test packages/opencode-sub2api-auth/test/usage.test.mjs
 # 9 pass, 0 fail
 
 bun test packages/opencode-sub2api-auth/test
-# 23 pass, 0 fail
+# 24 pass, 0 fail
 ```
 
 The package suite also exercises the loader contract against a fake streaming Chat Completions endpoint with a tools payload. Full Magpie-host integration still belongs to the separate cutover build. All HTTP tests use local fake servers; no live Sub2API, TFlow, or external vendor endpoint is contacted.

@@ -76,7 +76,7 @@ export function parseModels(payload, provider = {}) {
       : typeof raw.display_name === "string" && raw.display_name.trim()
         ? raw.display_name.trim()
         : id
-    const entry = {
+    const discovered = {
       id,
       name,
       api: {
@@ -86,8 +86,23 @@ export function parseModels(payload, provider = {}) {
       },
     }
     const limit = modelLimit(raw)
-    if (limit) entry.limit = limit
-    if (typeof raw.reasoning === "boolean") entry.capabilities = { reasoning: raw.reasoning }
+    if (limit) discovered.limit = limit
+    if (typeof raw.reasoning === "boolean") discovered.capabilities = { reasoning: raw.reasoning }
+
+    const configured = provider.models && typeof provider.models === "object" && !Array.isArray(provider.models)
+      && provider.models[id] && typeof provider.models[id] === "object"
+      ? provider.models[id]
+      : {}
+    const entry = {
+      ...discovered,
+      ...configured,
+      id,
+      api: { ...discovered.api, ...(configured.api && typeof configured.api === "object" ? configured.api : {}) },
+    }
+    if (discovered.limit || configured.limit) entry.limit = { ...(discovered.limit ?? {}), ...(configured.limit ?? {}) }
+    if (discovered.capabilities || configured.capabilities) {
+      entry.capabilities = { ...(discovered.capabilities ?? {}), ...(configured.capabilities ?? {}) }
+    }
     models[id] = entry
   }
 

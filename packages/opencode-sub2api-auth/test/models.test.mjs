@@ -39,6 +39,25 @@ describe("parseModels", () => {
       limit: { context: 4096, input: 3000, output: 1000 },
     })
   })
+
+  test("preserves configured model overrides while filling missing discovered fields", () => {
+    const models = parseModels({ data: [{ id: "configured", name: "Vendor name", context_length: 4096, max_output_tokens: 1000 }] }, {
+      id: "sub2api",
+      models: {
+        configured: {
+          name: "Local name",
+          options: { temperature: 0.2 },
+          limit: { context: 8192 },
+        },
+      },
+    })
+    expect(models.configured).toMatchObject({
+      id: "configured",
+      name: "Local name",
+      options: { temperature: 0.2 },
+      limit: { context: 8192, output: 1000 },
+    })
+  })
 })
 
 test("fetchModels authenticates the configured account and maps the endpoint response", async () => {

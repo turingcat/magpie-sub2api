@@ -102,3 +102,42 @@ test("fetchModels rejects failed refreshes without returning an empty model map 
     expect(error.message).not.toContain("key-to-keep")
   }
 })
+
+test("fetchModels bounds and redacts network errors", async () => {
+  await expect(fetchModels({
+    baseURL: "http://127.0.0.1:9/v1",
+    apiKey: "network-key",
+    provider: { id: "sub2api" },
+    fetchImpl: async () => { throw new Error("network failed for network-key") },
+  })).rejects.toThrow(/network failed/)
+
+  try {
+    await fetchModels({
+      baseURL: "http://127.0.0.1:9/v1",
+      apiKey: "network-key",
+      provider: { id: "sub2api" },
+      fetchImpl: async () => { throw new Error("network failed for network-key") },
+    })
+  } catch (error) {
+    expect(error.message).not.toContain("network-key")
+  }
+})
+
+test("fetchModels marks an explicitly invalid key as expired", async () => {
+  try {
+    await fetchModels({
+      baseURL: "https://relay.example/v1",
+      apiKey: "expired-model-key",
+      provider: { id: "sub2api" },
+      fetchImpl: async () => new Response(JSON.stringify({ error: { code: "invalid_api_key", message: "Invalid API key" } }), {
+        status: 401,
+        headers: { "content-type": "application/json" },
+      }),
+    })
+  } catch (error) {
+    expect(error.signIn).toBe("expired")
+    expect(error.message).not.toContain("expired-model-key")
+    return
+  }
+  throw new Error("expected invalid model key to throw")
+})

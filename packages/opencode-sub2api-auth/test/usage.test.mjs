@@ -95,6 +95,19 @@ test("fetchUsage preserves the account for network failures", async () => {
   expect(usage.error).not.toContain("network-key")
 })
 
+test("fetchUsage redacts failures while reading a response body", async () => {
+  const usage = await fetchUsage({
+    baseURL: "http://127.0.0.1:9/v1",
+    apiKey: "body-key",
+    fetchImpl: async () => ({
+      ok: true,
+      text: async () => { throw new Error("body failed for body-key") },
+    }),
+  })
+  expect(usage.signIn).toBe("kept")
+  expect(usage.error).not.toContain("body-key")
+})
+
 test("fetchUsage expires only an explicitly invalid key response", async () => {
   const server = await listen((_req, res) => {
     res.writeHead(401, { "content-type": "application/json" })

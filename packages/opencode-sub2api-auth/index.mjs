@@ -36,6 +36,15 @@ function baseURLPrompt() {
   }
 }
 
+function labelPrompt() {
+  return {
+    type: "text",
+    key: "label",
+    message: "Account label (optional; distinguishes the same endpoint)",
+    placeholder: "Home relay",
+  }
+}
+
 export async function Sub2APIAuthPlugin() {
   return {
     config: async (config) => {
@@ -55,11 +64,13 @@ export async function Sub2APIAuthPlugin() {
         {
           type: "api",
           label: "API key",
-          prompts: [baseURLPrompt()],
+          prompts: [baseURLPrompt(), labelPrompt()],
           authorize: async (inputs = {}) => {
             try {
               const baseURL = normalizeBaseURL(inputs.baseURL)
-              return { type: "success", metadata: { baseURL, email: accountLabel(baseURL) } }
+              const suppliedLabel = typeof inputs.label === "string" ? inputs.label.trim() : ""
+              const email = (suppliedLabel || accountLabel(baseURL)).slice(0, 80)
+              return { type: "success", metadata: { baseURL, email } }
             } catch (error) {
               return { type: "failed", error: error?.message || "Invalid Sub2API base URL" }
             }

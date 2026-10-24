@@ -18,10 +18,12 @@ This document records the implementation of the approved design in `docs/superpo
 
 The loader returns the normalized account endpoint and API key to `@ai-sdk/openai-compatible`; request forwarding remains owned by the OpenCode/Magpie host. This keeps the package free of Magpie file writes and provider-specific Go transport.
 
+The supported runtime is Magpie's plugin host, which invokes account-scoped model discovery after sign-in. Standalone OpenCode v1 cannot provide auth during its config hook and may skip dynamic model hooks for a non-`models.dev` provider; its users must preconfigure model IDs manually or use Magpie.
+
 ## Behavior implemented
 
 - Accepts local/LAN HTTP and public HTTPS URLs, preserves nested paths, and rejects credentials, query strings, fragments, and derived endpoint paths.
-- Calls each account's own `/models` and `/usage` endpoint with its own Bearer key.
+- Calls each account's own `/models` and `/usage` endpoint with its own Bearer key; an optional account label keeps same-endpoint keys from being merged by Magpie account settling.
 - Keeps upstream model IDs/names and explicit limits only; no synthetic prices are added.
 - Throws on model-list failure so the host can keep the last good list.
 - Displays wallet balances and 24-hour, 7-day, and 30-day subscription windows.
@@ -39,16 +41,16 @@ bun test packages/opencode-sub2api-auth/test/endpoint.test.mjs
 # 3 pass, 0 fail
 
 bun test packages/opencode-sub2api-auth/test/models.test.mjs
-# 5 pass, 0 fail
+# 7 pass, 0 fail
 
 bun test packages/opencode-sub2api-auth/test/usage.test.mjs
-# 8 pass, 0 fail
+# 9 pass, 0 fail
 
 bun test packages/opencode-sub2api-auth/test
-# 19 pass, 0 fail
+# 23 pass, 0 fail
 ```
 
-All HTTP tests use local fake servers. No live Sub2API, TFlow, or external vendor endpoint is contacted.
+The package suite also exercises the loader contract against a fake streaming Chat Completions endpoint with a tools payload. Full Magpie-host integration still belongs to the separate cutover build. All HTTP tests use local fake servers; no live Sub2API, TFlow, or external vendor endpoint is contacted.
 
 ## Magpie cutover boundary
 

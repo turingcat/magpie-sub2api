@@ -1,6 +1,8 @@
 # Sub2API OpenCode Provider
 
-`@magpie-community/opencode-sub2api-auth` is an OpenCode v1 provider plugin for self-hosted [Sub2API](https://github.com/turingcat/sub2api) instances. It exposes the exact provider ID `sub2api`, discovers models from each account's own endpoint, uses the host's normal OpenAI-compatible request path, and converts Sub2API usage responses into Magpie allowance cards.
+`@magpie-community/opencode-sub2api-auth` is an OpenCode v1 provider plugin for self-hosted [Sub2API](https://github.com/turingcat/sub2api) instances. Its supported target is the Magpie plugin host: it exposes the exact provider ID `sub2api`, discovers models from each account's own endpoint, uses the host's normal OpenAI-compatible request path, and converts Sub2API usage responses into Magpie allowance cards.
+
+Magpie calls the account-scoped `provider.models` hook after sign-in. Standalone OpenCode v1 has no auth available during its config hook and may skip dynamic model hooks for a provider that is not in `models.dev`; it can therefore show zero models unless you preconfigure model IDs manually. Use Magpie for dynamic discovery, multiple accounts, usage cards, and the complete contract.
 
 ## Install
 
@@ -21,7 +23,8 @@ After the package is reviewed and published, pin an exact package version instea
 The plugin has one API-key method:
 
 1. **Sub2API OpenAI-compatible Base URL**, for example `https://relay.example/v1` or `http://192.168.1.20:8000/v1`.
-2. **API key**, entered through OpenCode or Magpie's normal credential prompt.
+2. **Account label (optional)**, used to distinguish two keys pointed at the same normalized endpoint.
+3. **API key**, entered through OpenCode or Magpie's normal credential prompt.
 
 The URL is normalized before it is saved. Credentials, query strings, fragments, and already-derived paths such as `/models`, `/usage`, `/chat/completions`, `/responses`, and `/messages` are rejected. A saved account is logically equivalent to:
 
@@ -36,7 +39,7 @@ The URL is normalized before it is saved. Credentials, query strings, fragments,
 }
 ```
 
-`email` is only a display label. It is never sent to Sub2API. Multiple accounts are independent: each account has its own base URL, key, model list, usage response, and failure state.
+`email` is only a display label. It is never sent to Sub2API. Supply a different optional label when two accounts use the same base URL; otherwise the normalized host/path is used. Multiple accounts are independent: each account has its own base URL, key, model list, usage response, and failure state.
 
 ## Endpoints and requests
 

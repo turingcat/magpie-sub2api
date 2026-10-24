@@ -27,6 +27,28 @@ function boundedMessage(value, secret = "") {
   return text.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, MAX_ERROR_LENGTH)
 }
 
+function authRefused(status, payload, text) {
+  if (status !== 401 && status !== 403) return false
+  const error = payload?.error
+  const code = typeof payload?.code === "string" || typeof payload?.code === "number"
+    ? String(payload.code)
+    : error && typeof error === "object" && (typeof error.code === "string" || typeof error.code === "number")
+      ? String(error.code)
+      : error && typeof error === "object" && typeof error.type === "string"
+        ? error.type
+        : ""
+  const haystack = `${code} ${messageFromBody(payload)} ${text}`.toLowerCase()
+  return /invalid[_ -]?(?:api[_ -]?)?key/.test(haystack)
+    || /(?:invalid|revoked|expired)[^a-z0-9]*(?:api[_ -]?key|token|credential)/.test(haystack)
+    || /(?:api[_ -]?key|token|credential)[^a-z0-9]*(?:invalid|revoked|expired)/.test(haystack)
+}
+
+function modelError(message, signIn) {
+  const error = new Error(message)
+  if (signIn) error.signIn = signIn
+  return error
+}
+
 function modelLimit(raw) {
   const nested = raw.limits && typeof raw.limits === "object" ? raw.limits : {}
   const legacy = raw.limit && typeof raw.limit === "object" ? raw.limit : {}
@@ -76,23 +98,35 @@ export function parseModels(payload, provider = {}) {
 export async function fetchModels({ baseURL, apiKey, provider = {}, fetchImpl = globalThis.fetch }) {
   if (typeof fetchImpl !== "function") throw new Error("fetch is unavailable")
   const normalized = normalizeBaseURL(baseURL)
-  const response = await fetchImpl(endpoint(normalized, "models"), {
-    method: "GET",
-    headers: { accept: "application/json", authorization: `Bearer ${apiKey}` },
-  })
-  const text = await response.text()
+  let response
+  let text
+  try {
+    response = await fetchImpl(endpoint(normalized, "models"), {
+      method: "GET",
+      headers: { accept: "application/json", authorization: `Bearer ${apiKey}` },
+    })
+    text = await response.text()
+  } catch (error) {
+    throw new Error(`models request failed: ${boundedMessage(error?.message || "network error", apiKey) || "network error"}`)
+  }
   let payload
   try {
     payload = text ? JSON.parse(text) : null
   } catch {
     if (!response.ok) {
-      throw new Error(`models request failed (${response.status}): ${boundedMessage(text, apiKey) || "non-JSON response"}`)
+      throw modelError(
+        `models request failed (${response.status}): ${boundedMessage(text, apiKey) || "non-JSON response"}`,
+        authRefused(response.status, null, text) ? "expired" : "",
+      )
     }
-    throw new Error("models response was not valid JSON")
+    throw modelError("models response was not valid JSON")
   }
   if (!response.ok) {
     const detail = messageFromBody(payload) || boundedMessage(text, apiKey) || response.statusText || "request failed"
-    throw new Error(`models request failed (${response.status}): ${boundedMessage(detail, apiKey)}`)
+    throw modelError(
+      `models request failed (${response.status}): ${boundedMessage(detail, apiKey)}`,
+      authRefused(response.status, payload, text) ? "expired" : "",
+    )
   }
   return parseModels(payload, provider)
 }

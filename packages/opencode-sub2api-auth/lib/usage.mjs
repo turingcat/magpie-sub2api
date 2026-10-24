@@ -126,17 +126,17 @@ export async function fetchUsage({ baseURL, apiKey, fetchImpl = globalThis.fetch
   if (typeof fetchImpl !== "function") return { error: "fetch is unavailable", signIn: "kept" }
 
   let response
+  let text
   try {
     const normalized = normalizeBaseURL(baseURL)
     response = await fetchImpl(endpoint(normalized, "usage"), {
       method: "GET",
       headers: { accept: "application/json", authorization: `Bearer ${apiKey}` },
     })
+    text = await response.text()
   } catch (error) {
     return { error: bounded(error?.message || "usage request failed", apiKey), signIn: "kept" }
   }
-
-  const text = await response.text()
   let payload = null
   let parseError = false
   try {

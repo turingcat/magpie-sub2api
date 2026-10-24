@@ -27,11 +27,15 @@ test("registers the exact sub2api provider ID and API-key flow", async () => {
   expect(hooks.auth.methods).toHaveLength(1)
   expect(hooks.auth.methods[0].type).toBe("api")
   expect(hooks.auth.methods[0].prompts[0].key).toBe("baseURL")
-  expect(hooks.auth.methods[0].prompts[1].key).toBe("label")
-  const result = await hooks.auth.methods[0].authorize({ baseURL: " https://relay.example/v1/ ", label: "Home relay" })
-  expect(result).toMatchObject({ type: "success", metadata: { baseURL: "https://relay.example/v1", email: "Home relay" } })
+  expect(hooks.auth.methods[0].prompts[1].key).toBe("siteName")
+  const result = await hooks.auth.methods[0].authorize({ baseURL: " https://relay.example/v1/ ", siteName: "Home relay" })
+  expect(result).toMatchObject({
+    type: "success",
+    metadata: { baseURL: "https://relay.example/v1", email: "Home relay", siteName: "Home relay" },
+  })
   const derived = await hooks.auth.methods[0].authorize({ baseURL: "https://relay.example/v1" })
   expect(derived.metadata.email).toBe("relay.example/v1")
+  expect(derived.metadata.siteName).toBeUndefined()
   expect(await hooks.auth.methods[0].authorize({ baseURL: "https://relay.example/v1/models" })).toMatchObject({ type: "failed" })
 })
 

@@ -23,7 +23,7 @@ After the package is reviewed and published, pin an exact package version instea
 The plugin has one API-key method:
 
 1. **Sub2API OpenAI-compatible Base URL**, for example `https://relay.example/v1` or `http://192.168.1.20:8000/v1`.
-2. **Account label (optional)**, used to distinguish two keys pointed at the same normalized endpoint.
+2. **Site name (optional)**, shown in Magpie instead of the generic `Sub2API` provider name and used to distinguish two keys pointed at the same normalized endpoint.
 3. **API key**, entered through OpenCode or Magpie's normal credential prompt.
 
 The URL is normalized before it is saved. Credentials, query strings, fragments, and already-derived paths such as `/models`, `/usage`, `/chat/completions`, `/responses`, and `/messages` are rejected. A saved account is logically equivalent to:
@@ -39,7 +39,7 @@ The URL is normalized before it is saved. Credentials, query strings, fragments,
 }
 ```
 
-`email` is only a display label. It is never sent to Sub2API. Supply a different optional label when two accounts use the same base URL; otherwise the normalized host/path is used. Multiple accounts are independent: each account has its own base URL, key, model list, usage response, and failure state.
+`email` is only a display label. It is never sent to Sub2API. When a site name is supplied, it is saved as both `metadata.siteName` and the host-compatible `metadata.email`, so Magpie displays that name instead of `Sub2API`. Without a site name, the normalized host/path is used. Multiple accounts are independent: each account has its own site name, base URL, key, model list, usage response, and failure state.
 
 ## Endpoints and requests
 

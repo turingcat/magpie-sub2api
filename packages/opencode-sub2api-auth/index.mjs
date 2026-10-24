@@ -36,12 +36,12 @@ function baseURLPrompt() {
   }
 }
 
-function labelPrompt() {
+function siteNamePrompt() {
   return {
     type: "text",
-    key: "label",
-    message: "Account label (optional; distinguishes the same endpoint)",
-    placeholder: "Home relay",
+    key: "siteName",
+    message: "Site name (optional; shown instead of Sub2API)",
+    placeholder: "Home site",
   }
 }
 
@@ -64,13 +64,13 @@ export async function Sub2APIAuthPlugin() {
         {
           type: "api",
           label: "API key",
-          prompts: [baseURLPrompt(), labelPrompt()],
+          prompts: [baseURLPrompt(), siteNamePrompt()],
           authorize: async (inputs = {}) => {
             try {
               const baseURL = normalizeBaseURL(inputs.baseURL)
-              const suppliedLabel = typeof inputs.label === "string" ? inputs.label.trim() : ""
-              const email = (suppliedLabel || accountLabel(baseURL)).slice(0, 80)
-              return { type: "success", metadata: { baseURL, email } }
+              const siteName = typeof inputs.siteName === "string" ? inputs.siteName.trim().slice(0, 80) : ""
+              const email = siteName || accountLabel(baseURL)
+              return { type: "success", metadata: { baseURL, email, ...(siteName ? { siteName } : {}) } }
             } catch (error) {
               return { type: "failed", error: error?.message || "Invalid Sub2API base URL" }
             }

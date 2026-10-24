@@ -1,0 +1,18 @@
+{
+  "name": "@magpie-community/opencode-sub2api-auth",
+  "version": "0.1.0",
+  "description": "OpenCode/Magpie provider plugin for self-hosted Sub2API instances",
+  "type": "module",
+  "main": "./index.mjs",
+  "exports": "./index.mjs",
+  "files": ["index.mjs", "lib", "README.md"],
+  "keywords": ["opencode", "opencode-plugin", "magpie", "sub2api", "openai-compatible"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/turingcat/magpie-sub2api.git"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
